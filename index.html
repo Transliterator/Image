@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Зображення з сайту</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-6 max-w-3xl w-full space-y-4">
+    <h1 class="text-2xl font-bold text-gray-800 text-center">Отримати всі зображення з сайту</h1>
+
+    <div class="flex gap-2">
+      <input id="urlInput" type="text" placeholder="https://example.com" class="flex-1 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <button onclick="getImages()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Пошук</button>
+    </div>
+
+    <div id="loading" class="text-gray-500 text-sm hidden">Завантаження...</div>
+
+    <ul id="imageList" class="space-y-4 max-h-96 overflow-y-auto"></ul>
+  </div>
+
+  <script>
+    async function getImages() {
+      const url = document.getElementById('urlInput').value.trim();
+      const list = document.getElementById('imageList');
+      const loading = document.getElementById('loading');
+      list.innerHTML = '';
+      loading.classList.remove('hidden');
+
+      try {
+        const response = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const images = doc.querySelectorAll('img');
+
+        if (images.length === 0) {
+          list.innerHTML = '<li class="text-gray-500">Зображень не знайдено.</li>';
+        } else {
+          images.forEach(img => {
+            const src = img.src;
+            const alt = img.alt || '[alt не вказано]';
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <div class="flex items-center gap-4">
+                <img src="${src}" alt="${alt}" class="w-24 h-auto border rounded" loading="lazy"/>
+                <div class="text-sm">
+                  <p><strong>alt:</strong> ${alt}</p>
+                  <p><a href="${src}" target="_blank" class="text-blue-600 hover:underline">Відкрити зображення</a></p>
+                </div>
+              </div>`;
+            list.appendChild(li);
+          });
+        }
+      } catch (error) {
+        list.innerHTML = `<li class="text-red-600">Помилка: ${error.message}</li>`;
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
